@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { shallowEquals } from "../equalities";
 import { ComponentType } from "react";
+import { useRef } from "../hooks/useRef";
+import React from "react";
 
 /**
  * 1. 이전 props를 저장할 ref 생성
@@ -16,5 +18,18 @@ export function memo<P extends object>(
   Component: ComponentType<P>,
   _equals = shallowEquals,
 ) {
-  return Component;
+  return function MemoizedWrapper(props: P) {
+    const prevProps = useRef(props);
+    const memoizedComponent = useRef<JSX.Element | null>(null);
+
+    if (
+      !_equals(prevProps.current, props) || memoizedComponent.current === null
+    ) {
+      prevProps.current = props;
+
+      memoizedComponent.current = React.createElement(Component, props);
+    }
+
+    return memoizedComponent.current;
+  };
 }
