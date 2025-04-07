@@ -17,15 +17,21 @@ export function deepEquals<T>(objA: T, objB: T): boolean {
     objB === null ||
     typeof objA !== "object" ||
     typeof objB !== "object"
-  )
+  ) {
     return false;
+  }
 
   if (Array.isArray(objA) && Array.isArray(objB)) {
     if (objA.length !== objB.length) return false;
     return objA.every((v, i) => deepEquals(v, objB[i]));
   }
 
-  return Object.keys(objA as object).every((key) =>
+  const keysA = Object.keys(objA as object);
+  const keysB = Object.keys(objB as object);
+
+  if (keysA.length !== keysB.length) return false;
+
+  return keysA.every((key) =>
     deepEquals(objA[key as keyof T], objB[key as keyof T]),
   );
 }
