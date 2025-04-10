@@ -3,7 +3,6 @@ import { generateItems, renderLog } from "./utils";
 import { memo } from "./@lib/hocs";
 import { useMemo } from "./@lib/hooks";
 
-
 // 타입 정의
 interface Item {
   id: number;
@@ -29,7 +28,9 @@ interface Notification {
  * - theme: 현재 적용된 테마 ("light" | "dark")
  * - toggleTheme: 테마를 전환하는 함수
  */
-const ThemeContext = createContext<{ theme: string; toggleTheme: () => void } | undefined>(undefined);
+const ThemeContext = createContext<
+  { theme: string; toggleTheme: () => void } | undefined
+>(undefined);
 
 /**
  * 사용자 인증 관련 Context
@@ -37,7 +38,14 @@ const ThemeContext = createContext<{ theme: string; toggleTheme: () => void } | 
  * - login: 이메일과 비밀번호로 로그인하는 함수
  * - logout: 로그아웃 처리 함수
  */
-const UserContext = createContext<{ user: User | null; login: (email: string, password: string) => void; logout: () => void } | undefined>(undefined);
+const UserContext = createContext<
+  | {
+      user: User | null;
+      login: (email: string, password: string) => void;
+      logout: () => void;
+    }
+  | undefined
+>(undefined);
 
 /**
  * 알림 시스템 관련 Context
@@ -45,7 +53,14 @@ const UserContext = createContext<{ user: User | null; login: (email: string, pa
  * - addNotification: 새로운 알림을 추가하는 함수
  * - removeNotification: 특정 ID의 알림을 제거하는 함수
  */
-const NotificationContext = createContext<{ notifications: Notification[]; addNotification: (message: string, type: Notification["type"]) => void; removeNotification: (id: number) => void } | undefined>(undefined);
+const NotificationContext = createContext<
+  | {
+      notifications: Notification[];
+      addNotification: (message: string, type: Notification["type"]) => void;
+      removeNotification: (id: number) => void;
+    }
+  | undefined
+>(undefined);
 
 /**
  * 테마 Context를 사용하기 위한 커스텀 훅
@@ -76,11 +91,13 @@ const useUser = () => {
  */
 const useNotification = () => {
   const context = useContext(NotificationContext);
-  if (!context) throw new Error("useNotification must be used within NotificationProvider");
+  if (!context)
+    throw new Error("useNotification must be used within NotificationProvider");
   return context;
 };
 
 // Header 컴포넌트
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface HeaderProps {}
 
 export const Header = memo<HeaderProps>(() => {
@@ -190,6 +207,7 @@ export const ItemList = memo<ItemListProps>(({ items, onAddItemsClick }) => {
 });
 
 // ComplexForm 컴포넌트
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface ComplexFormProps {}
 
 export const ComplexForm = memo<ComplexFormProps>(() => {
@@ -277,6 +295,7 @@ export const ComplexForm = memo<ComplexFormProps>(() => {
 });
 
 // NotificationSystem 컴포넌트
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface NotificationSystemProps {}
 
 export const NotificationSystem = memo<NotificationSystemProps>(() => {
@@ -314,7 +333,7 @@ export const NotificationSystem = memo<NotificationSystemProps>(() => {
 // 메인 App 컴포넌트
 const App: React.FC = () => {
   const [theme, setTheme] = useState("light");
-  
+
   /**
    * 초기 아이템 목록을 생성하고 메모이제이션
    * - 컴포넌트가 리렌더링되어도 generateItems 함수는 한 번만 호출됨
@@ -341,30 +360,38 @@ const App: React.FC = () => {
       ...Array.from({ length: 1000 }, (_, index) => ({
         id: prevItems.length + index,
         name: `상품 ${prevItems.length + index}`,
-        category: ["전자기기", "의류", "도서", "식품"][Math.floor(Math.random() * 4)],
+        category: ["전자기기", "의류", "도서", "식품"][
+          Math.floor(Math.random() * 4)
+        ],
         price: Math.floor(Math.random() * 100000) + 1000,
       })),
     ]);
   }, []);
 
-  const login = React.useCallback((email: string) => {
-    setUser({ id: 1, name: "홍길동", email });
-    addNotification("성공적으로 로그인되었습니다", "success");
-  }, []);
+  const addNotification = React.useCallback(
+    (message: string, type: Notification["type"]) => {
+      const newNotification: Notification = {
+        id: Date.now(),
+        message,
+        type,
+      };
+      setNotifications((prev) => [...prev, newNotification]);
+    },
+    [],
+  );
+
+  const login = React.useCallback(
+    (email: string) => {
+      setUser({ id: 1, name: "홍길동", email });
+      addNotification("성공적으로 로그인되었습니다", "success");
+    },
+    [addNotification],
+  );
 
   const logout = React.useCallback(() => {
     setUser(null);
     addNotification("로그아웃되었습니다", "info");
-  }, []);
-
-  const addNotification = React.useCallback((message: string, type: Notification["type"]) => {
-    const newNotification: Notification = {
-      id: Date.now(),
-      message,
-      type,
-    };
-    setNotifications((prev) => [...prev, newNotification]);
-  }, []);
+  }, [addNotification]);
 
   const removeNotification = React.useCallback((id: number) => {
     setNotifications((prev) =>
@@ -376,46 +403,60 @@ const App: React.FC = () => {
    * 테마 Context 값 메모이제이션
    * - theme이나 toggleTheme가 변경될 때만 새로운 객체 생성
    */
-  const themeContextValue = React.useMemo(() => ({
-    theme,
-    toggleTheme
-  }), [theme, toggleTheme]);
+  const themeContextValue = React.useMemo(
+    () => ({
+      theme,
+      toggleTheme,
+    }),
+    [theme, toggleTheme],
+  );
 
   /**
    * 사용자 Context 값 메모이제이션
    * - user, login, logout이 변경될 때만 새로운 객체 생성
    */
-  const userContextValue = React.useMemo(() => ({
-    user,
-    login,
-    logout
-  }), [user, login, logout]);
+  const userContextValue = React.useMemo(
+    () => ({
+      user,
+      login,
+      logout,
+    }),
+    [user, login, logout],
+  );
 
   /**
    * 알림 Context 값 메모이제이션
    * - notifications나 관련 함수들이 변경될 때만 새로운 객체 생성
    */
-  const notificationContextValue = React.useMemo(() => ({
-    notifications,
-    addNotification,
-    removeNotification
-  }), [notifications, addNotification, removeNotification]);
+  const notificationContextValue = React.useMemo(
+    () => ({
+      notifications,
+      addNotification,
+      removeNotification,
+    }),
+    [notifications, addNotification, removeNotification],
+  );
 
   /**
    * ItemList 컴포넌트에 전달할 props를 메모이제이션
    * - items나 addItems가 변경될 때만 새로운 객체 생성
    * - ItemList 컴포넌트의 불필요한 리렌더링 방지
    */
-  const itemListProps = useMemo(() => ({
-    items,
-    onAddItemsClick: addItems
-  }), [items, addItems]);
+  const itemListProps = useMemo(
+    () => ({
+      items,
+      onAddItemsClick: addItems,
+    }),
+    [items, addItems],
+  );
 
   return (
     <ThemeContext.Provider value={themeContextValue}>
       <UserContext.Provider value={userContextValue}>
         <NotificationContext.Provider value={notificationContextValue}>
-          <div className={`min-h-screen ${theme === "light" ? "bg-gray-100" : "bg-gray-900 text-white"}`}>
+          <div
+            className={`min-h-screen ${theme === "light" ? "bg-gray-100" : "bg-gray-900 text-white"}`}
+          >
             <Header />
             <div className="container mx-auto px-4 py-8">
               <div className="flex flex-col md:flex-row">
