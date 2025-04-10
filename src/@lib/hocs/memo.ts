@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { shallowEquals } from "../equalities";
 import { ComponentType } from "react";
 import { useRef } from "../hooks/useRef";
@@ -23,7 +22,8 @@ export function memo<P extends object>(
     const memoizedComponent = useRef<JSX.Element | null>(null);
 
     if (
-      !_equals(prevProps.current, props) || memoizedComponent.current === null
+      !_equals(prevProps.current, props) ||
+      memoizedComponent.current === null
     ) {
       prevProps.current = props;
 
